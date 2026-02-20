@@ -1,0 +1,10 @@
+{
+  "name": "notion-daily-log",
+  "version": "1.0.0",
+  "description": "Create daily Notion page automatically (KST 08:00, weekdays)",
+  "main": "scripts/notion-daily.js",
+  "type": "commonjs",
+  "dependencies": {
+    "@notionhq/client": "^2.2.14"
+  }
+}
