@@ -12,7 +12,7 @@
 
 - `NOTION_TOKEN` : 노션 내부 통합 토큰
 - `NOTION_DATABASE_ID` : 노션 데이터베이스 ID
-- `TITLE_PROP_NAME` : `제목`
+- `TITLE_PROP_NAME` : `이름`
 
 ## 테스트(수동 실행)
 

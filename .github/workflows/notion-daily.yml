@@ -24,11 +24,11 @@ jobs:
       - name: 패키지 설치
         run: npm install
 
-      - name: DB 디버그
-        run: node scripts/debug-db.js
-        env:
-          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+      # - name: DB 디버그
+      #   run: node scripts/debug-db.js
+      #   env:
+      #     NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+      #     NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
 
       - name: 스크립트 실행
         run: node scripts/notion-daily.js
