@@ -1,19 +1,38 @@
-# notion-daily-log
+# Notion Daily Log (Template Version)
 
-노션 데이터베이스에 업무일지를 자동 생성합니다.
+노션 데이터베이스에 템플릿을 적용하여 업무일지를 자동 생성합니다.
 
-- 스케줄: **한국시간(KST) 월~금 오전 8시**
-- 제목: `YYYY.MM.DD`
-- 중복 방지: 같은 제목이 있으면 생성하지 않음
+## ⏰ 실행 스케줄
+- 한국시간(KST)
+- 월요일 ~ 금요일
+- 오전 8시 자동 실행
 
-## GitHub Secrets 설정
+## 📌 생성 규칙
+- 제목 형식: YYYY.MM.DD
+- 중복 생성 방지
+- 템플릿 자동 적용
+- 날짜(Date) 속성 자동 입력
 
-저장소 → 설정(Settings) → 보안(Security) → 비밀 및 변수(Secrets and variables) → Actions
+---
 
-- `NOTION_TOKEN` : 노션 내부 통합 토큰
-- `NOTION_DATABASE_ID` : 노션 데이터베이스 ID
-- `TITLE_PROP_NAME` : `이름`
+## 🔐 GitHub Secrets 설정
 
-## 테스트(수동 실행)
+Settings → Security → Secrets and variables → Actions → Repository secrets
 
-Actions 탭 → **노션 업무일지 자동 생성** → **Run workflow**
+필수 3개:
+
+1️⃣ NOTION_TOKEN  
+노션 Internal Integration 토큰
+
+2️⃣ NOTION_DATABASE_ID  
+
+3️⃣ NOTION_TEMPLATE_NAME  
+예: 업무 일지 템플릿
+
+⚠️ 템플릿 이름은 노션과 정확히 일치해야 합니다.
+
+---
+
+## 🧪 테스트
+
+Actions → 노션 업무일지 자동 생성 → Run workflow

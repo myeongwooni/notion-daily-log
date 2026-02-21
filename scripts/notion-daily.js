@@ -1,27 +1,20 @@
 const { Client } = require("@notionhq/client");
 
-/**
- * Creates a Notion database item each weekday at 08:00 KST.
- * Title format: YYYY.MM.DD
- *
- * Required env:
- *  - NOTION_TOKEN
- *  - NOTION_DATABASE_ID
- *  - TITLE_PROP_NAME (set to "제목")
- */
-
-const notion = new Client({ auth: process.env.NOTION_TOKEN });
+const notion = new Client({
+  auth: process.env.NOTION_TOKEN,
+  notionVersion: "2025-09-03",
+});
 
 const DATABASE_ID = process.env.NOTION_DATABASE_ID;
-const TITLE_PROP_NAME = process.env.TITLE_PROP_NAME; // "제목"
+const TEMPLATE_NAME = process.env.NOTION_TEMPLATE_NAME;
+const TITLE_PROP_NAME = "이름";
 
-if (!DATABASE_ID || !TITLE_PROP_NAME || !process.env.NOTION_TOKEN) {
-  console.error("Missing env. Please set NOTION_TOKEN, NOTION_DATABASE_ID, TITLE_PROP_NAME.");
+if (!DATABASE_ID || !TEMPLATE_NAME || !process.env.NOTION_TOKEN) {
+  console.error("Missing required secrets.");
   process.exit(1);
 }
 
-// GitHub Actions schedule is UTC; we generate title in KST.
-const TIMEZONE_OFFSET_HOURS = 9; // KST = UTC+9
+const TIMEZONE_OFFSET_HOURS = 9;
 
 function formatTodayYYYYMMDD_KST() {
   const now = new Date();
@@ -34,28 +27,51 @@ function formatTodayYYYYMMDD_KST() {
   return `${yyyy}.${mm}.${dd}`;
 }
 
-async function existsByTitle(title) {
+async function getDataSourceIdFromDatabase(databaseId) {
+  const db = await notion.databases.retrieve({ database_id: databaseId });
+  const ds = db.data_sources?.[0];
+  if (!ds?.id) throw new Error("data_source_id not found.");
+  return ds.id;
+}
+
+async function findTemplateId(dataSourceId, templateName) {
+  const res = await notion.dataSources.listTemplates({
+    data_source_id: dataSourceId,
+  });
+  const tpl = res.templates?.find((t) => t.name === templateName);
+  if (!tpl?.id) throw new Error(`Template not found: ${templateName}`);
+  return tpl.id;
+}
+
+async function existsByTitle(databaseId, title) {
   const res = await notion.databases.query({
-    database_id: DATABASE_ID,
+    database_id: databaseId,
     filter: {
       property: TITLE_PROP_NAME,
       title: { equals: title },
     },
     page_size: 1,
   });
-
   return res.results.length > 0;
 }
 
-async function createDailyPage(title) {
+async function createPageWithTemplate(dataSourceId, templateId, title) {
   return notion.pages.create({
-    parent: { database_id: DATABASE_ID },
+    parent: {
+      type: "data_source_id",
+      data_source_id: dataSourceId,
+    },
+    template: {
+      type: "template_id",
+      template_id: templateId,
+    },
     properties: {
       [TITLE_PROP_NAME]: {
         title: [{ text: { content: title } }],
       },
-      // If you have a Date property named "날짜", uncomment:
-      // "날짜": { date: { start: title.replaceAll(".", "-") } },
+      "날짜": {
+        date: { start: title.replaceAll(".", "-") },
+      },
     },
   });
 }
@@ -63,13 +79,17 @@ async function createDailyPage(title) {
 (async () => {
   const title = formatTodayYYYYMMDD_KST();
 
-  if (await existsByTitle(title)) {
-    console.log("이미 존재:", title);
+  if (await existsByTitle(DATABASE_ID, title)) {
+    console.log("Already exists:", title);
     return;
   }
 
-  const page = await createDailyPage(title);
-  console.log("생성 완료:", page.id, title);
+  const dataSourceId = await getDataSourceIdFromDatabase(DATABASE_ID);
+  const templateId = await findTemplateId(dataSourceId, TEMPLATE_NAME);
+
+  const page = await createPageWithTemplate(dataSourceId, templateId, title);
+
+  console.log("Created with template:", page.id, title);
 })().catch((e) => {
   console.error(e);
   process.exit(1);

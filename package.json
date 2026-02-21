@@ -4,7 +4,7 @@
   "description": "Create daily Notion page automatically (KST 08:00, weekdays)",
   "main": "scripts/notion-daily.js",
   "type": "commonjs",
-  "dependencies": {
-    "@notionhq/client": "^2.2.14"
-  }
+"dependencies": {
+  "@notionhq/client": "^5.9.0"
+}
 }

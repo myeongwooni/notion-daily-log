@@ -3,9 +3,6 @@ name: 노션 업무일지 자동 생성
 on:
   workflow_dispatch: {}
   schedule:
-    # 한국시간(KST) 매일 08:00, 월~금만
-    # KST 08:00 = UTC 전날 23:00
-    # 그래서 UTC 기준으로 일~목(0-4) 23:00에 실행하면 KST 월~금 08:00이 됩니다.
     - cron: "0 23 * * 0-4"
 
 jobs:
@@ -24,15 +21,9 @@ jobs:
       - name: 패키지 설치
         run: npm install
 
-      # - name: DB 디버그
-      #   run: node scripts/debug-db.js
-      #   env:
-      #     NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-      #     NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
-
       - name: 스크립트 실행
         run: node scripts/notion-daily.js
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
-          TITLE_PROP_NAME: ${{ secrets.TITLE_PROP_NAME }}
+          NOTION_TEMPLATE_NAME: ${{ secrets.NOTION_TEMPLATE_NAME }}
