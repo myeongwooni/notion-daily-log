@@ -21,9 +21,28 @@ jobs:
       - name: 패키지 설치
         run: npm install
 
+      - name: 시크릿/변수 주입 상태 진단
+        shell: bash
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN || vars.NOTION_TOKEN }}
+          NOTION_DAILY_DATABASE_ID: ${{ secrets.NOTION_DAILY_DATABASE_ID || vars.NOTION_DAILY_DATABASE_ID }}
+          NOTION_DAILY_TEMPLATE_NAME: ${{ secrets.NOTION_DAILY_TEMPLATE_NAME || vars.NOTION_DAILY_TEMPLATE_NAME }}
+        run: |
+          echo "[diagnostics] event=$GITHUB_EVENT_NAME ref=$GITHUB_REF actor=$GITHUB_ACTOR"
+          for key in NOTION_TOKEN NOTION_DAILY_DATABASE_ID NOTION_DAILY_TEMPLATE_NAME; do
+            value="${!key}"
+            if [ -z "${value+x}" ]; then
+              echo "[diagnostics] $key=undefined"
+            elif [ -z "$value" ]; then
+              echo "[diagnostics] $key=empty"
+            else
+              echo "[diagnostics] $key=set (length=${#value})"
+            fi
+          done
+
       - name: 스크립트 실행
         run: node scripts/notion-daily.js
         env:
-          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-          NOTION_DAILY_DATABASE_ID: ${{ secrets.NOTION_DAILY_DATABASE_ID }}
-          NOTION_DAILY_TEMPLATE_NAME: ${{ secrets.NOTION_DAILY_TEMPLATE_NAME }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN || vars.NOTION_TOKEN }}
+          NOTION_DAILY_DATABASE_ID: ${{ secrets.NOTION_DAILY_DATABASE_ID || vars.NOTION_DAILY_DATABASE_ID }}
+          NOTION_DAILY_TEMPLATE_NAME: ${{ secrets.NOTION_DAILY_TEMPLATE_NAME || vars.NOTION_DAILY_TEMPLATE_NAME }}
