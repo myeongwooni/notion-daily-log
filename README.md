@@ -39,6 +39,9 @@ Count) - 평균집중도 (Rollup → 집중도 Average)
 2)  NOTION_DAILY_DATABASE_ID
 3)  NOTION_DAILY_TEMPLATE_NAME
 
+※ 이제 GitHub **Secrets**가 비어 있으면 동일 이름의 **Repository Variables(vars)**도
+자동으로 fallback 사용합니다. (권장: 민감값은 Secrets 사용)
+
 ------------------------------------------------------------------------
 
 [스케줄]
