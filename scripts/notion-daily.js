@@ -18,8 +18,56 @@ const DAILY_TEMPLATE_NAME = process.env.NOTION_DAILY_TEMPLATE_NAME;
 const TITLE_PROP_NAME = "이름"; // title
 const DATE_PROP_NAME = "날짜";  // date
 
-if (!DAILY_DB_ID || !DAILY_TEMPLATE_NAME || !process.env.NOTION_TOKEN) {
-  console.error("Missing required secrets: NOTION_TOKEN, NOTION_DAILY_DATABASE_ID, NOTION_DAILY_TEMPLATE_NAME");
+function summarizeEnv(name) {
+  const raw = process.env[name];
+  if (raw === undefined) {
+    return { name, state: "undefined" };
+  }
+
+  if (raw.length === 0) {
+    return { name, state: "empty string" };
+  }
+
+  if (raw.trim().length === 0) {
+    return { name, state: "whitespace only", length: raw.length };
+  }
+
+  return { name, state: "set", length: raw.length };
+}
+
+function printSecretDiagnostics(requiredSecretNames) {
+  const report = requiredSecretNames.map(summarizeEnv);
+
+  console.error("[diagnostics] Required secret/env status:");
+  for (const item of report) {
+    const extra = item.length ? ` (length=${item.length})` : "";
+    console.error(`  - ${item.name}: ${item.state}${extra}`);
+  }
+
+  // GitHub Actions context helps explain why secrets may be unavailable (e.g. PR from fork).
+  const contextKeys = [
+    "GITHUB_EVENT_NAME",
+    "GITHUB_REF",
+    "GITHUB_REPOSITORY",
+    "GITHUB_ACTOR",
+    "GITHUB_RUN_ID",
+  ];
+  console.error("[diagnostics] GitHub Actions context:");
+  for (const key of contextKeys) {
+    console.error(`  - ${key}: ${process.env[key] || "(not set)"}`);
+  }
+}
+
+const REQUIRED_SECRETS = ["NOTION_TOKEN", "NOTION_DAILY_DATABASE_ID", "NOTION_DAILY_TEMPLATE_NAME"];
+const missingSecrets = REQUIRED_SECRETS.filter((name) => {
+  const value = process.env[name];
+  return value === undefined || value.trim().length === 0;
+});
+
+if (missingSecrets.length > 0) {
+  console.error(`Missing required secrets: ${missingSecrets.join(", ")}`);
+  printSecretDiagnostics(REQUIRED_SECRETS);
+  console.error("[hint] Repository secrets are not provided to workflows triggered from forks or Dependabot.");
   process.exit(1);
 }
 
