@@ -99,9 +99,9 @@ async function findTemplateId(dataSourceId, templateName) {
   return tpl.id;
 }
 
-async function existsDailyByTitle(title) {
-  const res = await notion.databases.query({
-    database_id: DAILY_DB_ID,
+async function existsDailyByTitle(dataSourceId, title) {
+  const res = await notion.dataSources.query({
+    data_source_id: dataSourceId,
     filter: {
       property: TITLE_PROP_NAME,
       title: { equals: title },
@@ -138,13 +138,14 @@ async function forceUpdateTitle(pageId, title) {
   const dateISO = formatToday_KST_YYYY_MM_DD();
   const title = dateISO; // ✅ 제목도 yyyy-mm-dd
 
+  const dataSourceId = await getDataSourceIdFromDatabase(DAILY_DB_ID);
+
   // 중복 방지
-  if (await existsDailyByTitle(title)) {
+  if (await existsDailyByTitle(dataSourceId, title)) {
     console.log("이미 존재:", title);
     return;
   }
 
-  const dataSourceId = await getDataSourceIdFromDatabase(DAILY_DB_ID);
   const templateId = await findTemplateId(dataSourceId, DAILY_TEMPLATE_NAME);
 
   const page = await createDailyWithTemplate(dataSourceId, templateId, title, dateISO);
