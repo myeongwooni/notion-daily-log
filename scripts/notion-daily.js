@@ -89,7 +89,17 @@ async function createPageWithTemplate(dataSourceId, templateId, title) {
 
   const page = await createPageWithTemplate(dataSourceId, templateId, title);
 
-  console.log("Created with template:", page.id, title);
+  await notion.pages.update({
+    page_id: page.id,
+    properties: {
+      [TITLE_PROP_NAME]: {
+        title: [{ text: { content: title } }],
+      },
+    },
+  });
+
+  console.log("Created with template + title fixed:", page.id, title);
+
 })().catch((e) => {
   console.error(e);
   process.exit(1);
