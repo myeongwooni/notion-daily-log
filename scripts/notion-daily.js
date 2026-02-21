@@ -18,8 +18,56 @@ const DAILY_TEMPLATE_NAME = process.env.NOTION_DAILY_TEMPLATE_NAME;
 const TITLE_PROP_NAME = "이름"; // title
 const DATE_PROP_NAME = "날짜";  // date
 
-if (!DAILY_DB_ID || !DAILY_TEMPLATE_NAME || !process.env.NOTION_TOKEN) {
-  console.error("Missing required secrets: NOTION_TOKEN, NOTION_DAILY_DATABASE_ID, NOTION_DAILY_TEMPLATE_NAME");
+function summarizeEnv(name) {
+  const raw = process.env[name];
+  if (raw === undefined) {
+    return { name, state: "undefined" };
+  }
+
+  if (raw.length === 0) {
+    return { name, state: "empty string" };
+  }
+
+  if (raw.trim().length === 0) {
+    return { name, state: "whitespace only", length: raw.length };
+  }
+
+  return { name, state: "set", length: raw.length };
+}
+
+function printSecretDiagnostics(requiredSecretNames) {
+  const report = requiredSecretNames.map(summarizeEnv);
+
+  console.error("[diagnostics] Required secret/env status:");
+  for (const item of report) {
+    const extra = item.length ? ` (length=${item.length})` : "";
+    console.error(`  - ${item.name}: ${item.state}${extra}`);
+  }
+
+  // GitHub Actions context helps explain why secrets may be unavailable (e.g. PR from fork).
+  const contextKeys = [
+    "GITHUB_EVENT_NAME",
+    "GITHUB_REF",
+    "GITHUB_REPOSITORY",
+    "GITHUB_ACTOR",
+    "GITHUB_RUN_ID",
+  ];
+  console.error("[diagnostics] GitHub Actions context:");
+  for (const key of contextKeys) {
+    console.error(`  - ${key}: ${process.env[key] || "(not set)"}`);
+  }
+}
+
+const REQUIRED_SECRETS = ["NOTION_TOKEN", "NOTION_DAILY_DATABASE_ID", "NOTION_DAILY_TEMPLATE_NAME"];
+const missingSecrets = REQUIRED_SECRETS.filter((name) => {
+  const value = process.env[name];
+  return value === undefined || value.trim().length === 0;
+});
+
+if (missingSecrets.length > 0) {
+  console.error(`Missing required secrets: ${missingSecrets.join(", ")}`);
+  printSecretDiagnostics(REQUIRED_SECRETS);
+  console.error("[hint] Repository secrets are not provided to workflows triggered from forks or Dependabot.");
   process.exit(1);
 }
 
@@ -51,9 +99,9 @@ async function findTemplateId(dataSourceId, templateName) {
   return tpl.id;
 }
 
-async function existsDailyByTitle(title) {
-  const res = await notion.databases.query({
-    database_id: DAILY_DB_ID,
+async function existsDailyByTitle(dataSourceId, title) {
+  const res = await notion.dataSources.query({
+    data_source_id: dataSourceId,
     filter: {
       property: TITLE_PROP_NAME,
       title: { equals: title },
@@ -90,13 +138,14 @@ async function forceUpdateTitle(pageId, title) {
   const dateISO = formatToday_KST_YYYY_MM_DD();
   const title = dateISO; // ✅ 제목도 yyyy-mm-dd
 
+  const dataSourceId = await getDataSourceIdFromDatabase(DAILY_DB_ID);
+
   // 중복 방지
-  if (await existsDailyByTitle(title)) {
+  if (await existsDailyByTitle(dataSourceId, title)) {
     console.log("이미 존재:", title);
     return;
   }
 
-  const dataSourceId = await getDataSourceIdFromDatabase(DAILY_DB_ID);
   const templateId = await findTemplateId(dataSourceId, DAILY_TEMPLATE_NAME);
 
   const page = await createDailyWithTemplate(dataSourceId, templateId, title, dateISO);
