@@ -43,9 +43,9 @@ async function findTemplateId(dataSourceId, templateName) {
   return tpl.id;
 }
 
-async function existsByTitle(databaseId, title) {
-  const res = await notion.databases.query({
-    database_id: databaseId,
+async function existsByTitle(dataSourceId, title) {
+  const res = await notion.dataSources.query({
+    data_source_id: dataSourceId,
     filter: {
       property: TITLE_PROP_NAME,
       title: { equals: title },
@@ -78,13 +78,13 @@ async function createPageWithTemplate(dataSourceId, templateId, title) {
 
 (async () => {
   const title = formatTodayYYYYMMDD_KST();
+  const dataSourceId = await getDataSourceIdFromDatabase(DATABASE_ID);
 
-  if (await existsByTitle(DATABASE_ID, title)) {
+  if (await existsByTitle(dataSourceId, title)) {
     console.log("Already exists:", title);
     return;
   }
 
-  const dataSourceId = await getDataSourceIdFromDatabase(DATABASE_ID);
   const templateId = await findTemplateId(dataSourceId, TEMPLATE_NAME);
 
   const page = await createPageWithTemplate(dataSourceId, templateId, title);
