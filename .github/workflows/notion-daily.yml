@@ -25,5 +25,5 @@ jobs:
         run: node scripts/notion-daily.js
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
-          NOTION_TEMPLATE_NAME: ${{ secrets.NOTION_TEMPLATE_NAME }}
+          NOTION_DAILY_DATABASE_ID: ${{ secrets.NOTION_DAILY_DATABASE_ID }}
+          NOTION_DAILY_TEMPLATE_NAME: ${{ secrets.NOTION_DAILY_TEMPLATE_NAME }}
